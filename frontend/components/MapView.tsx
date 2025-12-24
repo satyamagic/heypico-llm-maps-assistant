@@ -21,12 +21,10 @@ export default function MapView({ places, apiKey }: MapViewProps) {
   const centerLat = places.reduce((sum, p) => sum + p.lat, 0) / places.length
   const centerLng = places.reduce((sum, p) => sum + p.lng, 0) / places.length
 
-  // Build markers query string
-  const markers = places
-    .map(p => `markers=color:red%7Clabel:${places.indexOf(p) + 1}%7C${p.lat},${p.lng}`)
-    .join('&')
-
-  const mapUrl = `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${centerLat},${centerLng}&zoom=14&${markers}`
+  // Use the search mode with the first place as the query
+  // This is the most compatible mode for Maps Embed API
+  const firstPlace = places[0]
+  const mapUrl = `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=place_id:${firstPlace.place_id}&zoom=14&center=${centerLat},${centerLng}`
 
   return (
     <div className="w-full h-96 rounded-xl overflow-hidden border border-dark-border">
