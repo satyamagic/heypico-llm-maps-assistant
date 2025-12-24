@@ -40,7 +40,8 @@ async def process_query(query: UserQuery):
         processed_query = query.query
         user_location_name = None
         
-        if query.user_lat and query.user_lng and ("near me" in query.query.lower() or "nearby" in query.query.lower()):
+        # If user location is provided, always get the location name for better results
+        if query.user_lat and query.user_lng:
             # Reverse geocode to get location name
             try:
                 geocode_result = google_maps_service.client.reverse_geocode((query.user_lat, query.user_lng))
@@ -52,11 +53,16 @@ async def process_query(query: UserQuery):
                             break
                     
                     if user_location_name:
-                        # Replace "near me" with actual location
-                        processed_query = processed_query.replace("near me", f"near {user_location_name}")
-                        processed_query = processed_query.replace("Near me", f"near {user_location_name}")
-                        processed_query = processed_query.replace("nearby", f"near {user_location_name}")
-                        logger.info(f"Replaced 'near me' with '{user_location_name}': {processed_query}")
+                        # If query doesn't already specify a location, add it
+                        if "near me" in query.query.lower() or "nearby" in query.query.lower():
+                            processed_query = processed_query.replace("near me", f"near {user_location_name}")
+                            processed_query = processed_query.replace("Near me", f"near {user_location_name}")
+                            processed_query = processed_query.replace("nearby", f"near {user_location_name}")
+                        elif "near" not in query.query.lower() and "in" not in query.query.lower():
+                            # No location specified at all, append the user's location
+                            processed_query = f"{processed_query} near {user_location_name}"
+                        
+                        logger.info(f"Using user location '{user_location_name}': {processed_query}")
             except Exception as e:
                 logger.warning(f"Could not geocode user location: {e}")
         
@@ -72,16 +78,19 @@ async def process_query(query: UserQuery):
         
         logger.info(f"Extracted intent: {intent}")
         
+        # Override location with user's actual location if available
+        search_location = user_location_name if user_location_name else intent.location
+        
         # Step 2: Search for places
         places = await google_maps_service.search_places(
             query=intent.query,
-            location=intent.location,
+            location=search_location,
             max_results=5
         )
         
         if not places:
             return QueryResponse(
-                ai_response=f"I couldn't find any {intent.query} places near {intent.location}. Try a different location or search term.",
+                ai_response=f"I couldn't find any {intent.query} places near {search_location}. Try a different location or search term.",
                 places=[],
                 user_location={
                     "lat": query.user_lat,
@@ -97,8 +106,15 @@ async def process_query(query: UserQuery):
                 places=places
             )
         
-        # Step 4: Generate AI response
-        ai_response = _generate_response(intent, places, has_distances=bool(query.user_lat))
+        # Step 4: Generate AI response (use actual search location)
+        # Create a modified intent with the actual search location for response generation
+        from app.schemas.models import LLMIntent
+        response_intent = LLMIntent(
+            query=intent.query,
+            location=search_location,
+            category=intent.category
+        )
+        ai_response = _generate_response(response_intent, places, has_distances=bool(query.user_lat))
         
         # Step 5: Return results
         return QueryResponse(
