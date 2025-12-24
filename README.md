@@ -4,6 +4,17 @@
 
 A production-quality demo application showcasing AI-to-tool automation, clean backend integration, and thoughtful UX for technical evaluation at HeyPico.ai.
 
+## 📸 Screenshots
+
+### Main Interface
+![Main Page](docs/screenshots/main-page.png)
+
+### Search Results with Embedded Maps
+![Search Results](docs/screenshots/search-results.png)
+
+### Place Cards with Transport Recommendations
+![Place Card](docs/screenshots/place-card.png)
+
 ## 🎯 Overview
 
 This application allows users to ask natural language questions like **"Where can I eat ramen near Blok M?"** and receive:
