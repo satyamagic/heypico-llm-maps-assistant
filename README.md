@@ -25,6 +25,26 @@ This application allows users to ask natural language questions like **"Where ca
 - Intelligent transport recommendations (walk/bike/drive)
 - Interactive map with directions
 
+## ✨ What's Included
+
+This repository includes:
+
+* **Full-stack Application**: FastAPI backend + Next.js frontend with TypeScript
+* **AI Integration**: Ollama/Llama 3.2 for natural language understanding with fallback parsing
+* **Google Maps Integration**: Places API, Distance Matrix API, Geocoding API, and Maps Embed API
+* **Smart Location Handling**: Automatic GPS-based location detection and "near me" query processing
+* **Transport Intelligence**: Walk/bike/drive recommendations based on distance and time
+* **Embedded Maps**: Individual maps on each place card for visual context
+* **Rate Limiting**: Built-in middleware to protect API endpoints
+* **Security Best Practices**: Environment variables, CORS configuration, API key restrictions
+* **Comprehensive Documentation**: 
+  - `README.md` - Complete setup and usage guide
+  - `ASSUMPTIONS.md` - Design decisions and technical rationale
+  - `TASKS.md` - Development checklist and progress tracking
+  - `DELIVERY.md` - Deployment and delivery instructions
+* **Production-Ready Code**: Clean architecture, error handling, logging, and type safety
+* **Testing Tools**: Backend test script (`test_backend.py`) for API validation
+
 ## 🏗️ Architecture
 
 ```
