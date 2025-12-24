@@ -36,9 +36,33 @@ async def process_query(query: UserQuery):
     5. Return structured results
     """
     try:
+        # Preprocess query: replace "near me" with actual location if coordinates provided
+        processed_query = query.query
+        user_location_name = None
+        
+        if query.user_lat and query.user_lng and ("near me" in query.query.lower() or "nearby" in query.query.lower()):
+            # Reverse geocode to get location name
+            try:
+                geocode_result = google_maps_service.client.reverse_geocode((query.user_lat, query.user_lng))
+                if geocode_result:
+                    # Extract city name
+                    for component in geocode_result[0].get('address_components', []):
+                        if 'locality' in component.get('types', []) or 'administrative_area_level_2' in component.get('types', []):
+                            user_location_name = component.get('long_name')
+                            break
+                    
+                    if user_location_name:
+                        # Replace "near me" with actual location
+                        processed_query = processed_query.replace("near me", f"near {user_location_name}")
+                        processed_query = processed_query.replace("Near me", f"near {user_location_name}")
+                        processed_query = processed_query.replace("nearby", f"near {user_location_name}")
+                        logger.info(f"Replaced 'near me' with '{user_location_name}': {processed_query}")
+            except Exception as e:
+                logger.warning(f"Could not geocode user location: {e}")
+        
         # Step 1: Extract intent using LLM
-        logger.info(f"Processing query: {query.query}")
-        intent = await llm_service.extract_intent(query.query)
+        logger.info(f"Processing query: {processed_query}")
+        intent = await llm_service.extract_intent(processed_query)
         
         if not intent:
             raise HTTPException(

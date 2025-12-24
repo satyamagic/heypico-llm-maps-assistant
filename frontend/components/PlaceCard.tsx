@@ -46,31 +46,55 @@ export default function PlaceCard({ place, userLocation }: PlaceCardProps) {
     }
   }
 
+  // Get Google Maps API key from environment
+  const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY
+  const mapEmbedUrl = mapsApiKey 
+    ? `https://www.google.com/maps/embed/v1/place?key=${mapsApiKey}&q=place_id:${place.place_id}&zoom=15`
+    : null
+
   return (
-    <div className="bg-dark-surface border border-dark-border rounded-xl p-6 
+    <div className="bg-dark-surface border border-dark-border rounded-xl overflow-hidden
                   hover:border-accent/50 transition-all duration-200
                   hover:shadow-lg hover:shadow-accent/5">
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-text-primary mb-1">
-            {place.name}
-          </h3>
-          <p className="text-sm text-text-secondary">
-            {place.address}
-          </p>
+      
+      {/* Embedded Map */}
+      {mapEmbedUrl && (
+        <div className="w-full h-48 relative">
+          <iframe
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            src={mapEmbedUrl}
+            className="pointer-events-none"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-dark-surface/30 pointer-events-none" />
         </div>
-        {place.rating && (
-          <div className="flex items-center gap-1 ml-4">
-            <span className="text-yellow-400">★</span>
-            <span className="text-text-primary font-medium">{place.rating}</span>
-            {place.user_ratings_total && (
-              <span className="text-text-muted text-sm">
-                ({place.user_ratings_total})
-              </span>
-            )}
+      )}
+
+      <div className="p-6">
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-text-primary mb-1">
+              {place.name}
+            </h3>
+            <p className="text-sm text-text-secondary">
+              {place.address}
+            </p>
           </div>
-        )}
-      </div>
+          {place.rating && (
+            <div className="flex items-center gap-1 ml-4">
+              <span className="text-yellow-400">★</span>
+              <span className="text-text-primary font-medium">{place.rating}</span>
+              {place.user_ratings_total && (
+                <span className="text-text-muted text-sm">
+                  ({place.user_ratings_total})
+                </span>
+              )}
+            </div>
+          )}
+        </div>
 
       {place.distance && (
         <div className="mb-4 pb-4 border-b border-dark-border">
@@ -121,29 +145,30 @@ export default function PlaceCard({ place, userLocation }: PlaceCardProps) {
         </div>
       )}
 
-      <div className="flex gap-3">
-        <a
-          href={getDirectionsUrl()}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 px-4 py-2 bg-accent text-white rounded-lg
-                   hover:bg-blue-600 active:bg-blue-700
-                   text-center text-sm font-medium
-                   transition-colors duration-200"
-        >
-          Get Directions
-        </a>
-        <a
-          href={place.maps_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="px-4 py-2 border border-dark-border rounded-lg
-                   hover:border-accent/50 hover:bg-dark-border/50
-                   text-center text-sm font-medium text-text-secondary
-                   transition-all duration-200"
-        >
-          View on Map
-        </a>
+        <div className="flex gap-3">
+          <a
+            href={getDirectionsUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 px-4 py-2 bg-accent text-white rounded-lg
+                     hover:bg-blue-600 active:bg-blue-700
+                     text-center text-sm font-medium
+                     transition-colors duration-200"
+          >
+            Get Directions
+          </a>
+          <a
+            href={place.maps_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 border border-dark-border rounded-lg
+                     hover:border-accent/50 hover:bg-dark-border/50
+                     text-center text-sm font-medium text-text-secondary
+                     transition-all duration-200"
+          >
+            View on Map
+          </a>
+        </div>
       </div>
     </div>
   )
