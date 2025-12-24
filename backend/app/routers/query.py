@@ -2,6 +2,7 @@
 Query router for handling user queries
 """
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 from app.schemas.models import UserQuery, QueryResponse, Place
 from app.services.llm_service import llm_service
 from app.services.google_maps_service import google_maps_service
@@ -10,6 +11,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+class LocationRequest(BaseModel):
+    lat: float
+    lng: float
+
+
+class LocationResponse(BaseModel):
+    city: str
+    formatted_address: str
 
 
 @router.post("/query", response_model=QueryResponse)
@@ -106,3 +117,50 @@ def _generate_response(intent, places: list[Place], has_distances: bool) -> str:
         response += "Here are my top recommendations for you."
     
     return response
+
+
+@router.post("/geocode", response_model=LocationResponse)
+async def reverse_geocode(location: LocationRequest):
+    """
+    Reverse geocode coordinates to get city name and address
+    
+    Args:
+        location: Latitude and longitude
+        
+    Returns:
+        City name and formatted address
+    """
+    try:
+        logger.info(f"Reverse geocoding: {location.lat}, {location.lng}")
+        
+        # Use Google Maps client to reverse geocode
+        result = google_maps_service.client.reverse_geocode((location.lat, location.lng))
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="Location not found")
+        
+        # Extract city name from address components
+        city = None
+        for component in result[0].get('address_components', []):
+            if 'locality' in component.get('types', []):
+                city = component.get('long_name')
+                break
+            elif 'administrative_area_level_2' in component.get('types', []):
+                city = component.get('long_name')
+        
+        if not city:
+            city = "Unknown Location"
+        
+        formatted_address = result[0].get('formatted_address', '')
+        
+        logger.info(f"Geocoded to: {city}")
+        
+        return LocationResponse(
+            city=city,
+            formatted_address=formatted_address
+        )
+        
+    except Exception as e:
+        logger.error(f"Geocoding error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to geocode location")
+

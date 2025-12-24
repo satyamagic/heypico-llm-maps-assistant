@@ -49,21 +49,23 @@ export default function Home() {
             }
             setUserLocation(location)
             
-            // Reverse geocode to get city name
+            // Reverse geocode to get city name via backend
             try {
-              const response = await fetch(
-                `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.lat},${location.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY}`
-              )
-              const data = await response.json()
-              if (data.results && data.results[0]) {
-                // Find city name from address components
-                const addressComponents = data.results[0].address_components
-                const city = addressComponents.find((c: any) => 
-                  c.types.includes('locality') || c.types.includes('administrative_area_level_2')
-                )
-                if (city) {
-                  setLocationName(city.long_name)
-                }
+              const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+              const response = await fetch(`${apiUrl}/api/geocode`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  lat: location.lat,
+                  lng: location.lng,
+                }),
+              })
+              
+              if (response.ok) {
+                const data = await response.json()
+                setLocationName(data.city)
               }
             } catch (err) {
               console.log('Geocoding error:', err)
