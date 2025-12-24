@@ -215,16 +215,6 @@ export default function Home() {
               ))}
             </div>
           )}
-
-          {/* Map View */}
-          {response.places.length > 0 && mapsApiKey && (
-            <div className="mt-8">
-              <h3 className="text-xl font-semibold text-text-primary mb-4">
-                View on Map
-              </h3>
-              <MapView places={response.places} apiKey={mapsApiKey} />
-            </div>
-          )}
         </div>
       )}
 
