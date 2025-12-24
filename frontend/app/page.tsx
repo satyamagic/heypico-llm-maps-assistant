@@ -33,22 +33,48 @@ export default function Home() {
   const [response, setResponse] = useState<QueryResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [locationName, setLocationName] = useState<string | null>(null)
+  const [locationLoading, setLocationLoading] = useState(false)
 
   // Get user location on first load
   const getUserLocation = (): Promise<{ lat: number; lng: number } | null> => {
     return new Promise((resolve) => {
       if ('geolocation' in navigator) {
+        setLocationLoading(true)
         navigator.geolocation.getCurrentPosition(
-          (position) => {
+          async (position) => {
             const location = {
               lat: position.coords.latitude,
               lng: position.coords.longitude,
             }
             setUserLocation(location)
+            
+            // Reverse geocode to get city name
+            try {
+              const response = await fetch(
+                `https://maps.googleapis.com/maps/api/geocode/json?latlng=${location.lat},${location.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY}`
+              )
+              const data = await response.json()
+              if (data.results && data.results[0]) {
+                // Find city name from address components
+                const addressComponents = data.results[0].address_components
+                const city = addressComponents.find((c: any) => 
+                  c.types.includes('locality') || c.types.includes('administrative_area_level_2')
+                )
+                if (city) {
+                  setLocationName(city.long_name)
+                }
+              }
+            } catch (err) {
+              console.log('Geocoding error:', err)
+            }
+            
+            setLocationLoading(false)
             resolve(location)
           },
           (error) => {
             console.log('Geolocation error:', error)
+            setLocationLoading(false)
             resolve(null)
           }
         )
@@ -110,6 +136,40 @@ export default function Home() {
         <p className="text-text-secondary max-w-2xl mx-auto">
           Ask where you want to go, and we'll find the best places with intelligent transport recommendations
         </p>
+        
+        {/* User Location Display */}
+        {locationLoading && (
+          <div className="flex items-center justify-center gap-2 text-sm text-text-muted">
+            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Detecting your location...
+          </div>
+        )}
+        {userLocation && locationName && !locationLoading && (
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-dark-surface border border-dark-border rounded-full text-sm">
+            <span className="text-2xl">📍</span>
+            <span className="text-text-secondary">Your location:</span>
+            <span className="text-accent font-medium">{locationName}</span>
+            <button
+              onClick={() => getUserLocation()}
+              className="ml-2 text-text-muted hover:text-accent transition-colors"
+              title="Refresh location"
+            >
+              🔄
+            </button>
+          </div>
+        )}
+        {!userLocation && !locationLoading && (
+          <button
+            onClick={() => getUserLocation()}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/30 rounded-full text-sm text-accent hover:bg-accent/20 transition-colors"
+          >
+            <span className="text-xl">📍</span>
+            Enable Location for Better Results
+          </button>
+        )}
       </div>
 
       {/* Chat Input */}
@@ -177,9 +237,9 @@ export default function Home() {
             <p className="text-sm text-text-muted">Try examples like:</p>
             <div className="flex flex-wrap gap-2 justify-center">
               {[
-                'Where can I eat ramen near Blok M?',
-                'Find coffee shops in Menteng',
-                'Best pizza places in Sudirman',
+                locationName ? `Ramen near ${locationName}` : 'Where can I eat ramen near me?',
+                locationName ? `Coffee shops in ${locationName}` : 'Find coffee shops near me',
+                locationName ? `Best pizza in ${locationName}` : 'Best pizza places near me',
               ].map((example) => (
                 <button
                   key={example}

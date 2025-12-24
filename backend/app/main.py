@@ -4,6 +4,7 @@ Main FastAPI application entry point
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import query
+from app.middleware.rate_limit import rate_limit_middleware
 import os
 
 # Initialize FastAPI app
@@ -22,6 +23,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add rate limiting middleware
+app.middleware("http")(rate_limit_middleware)
 
 # Include routers
 app.include_router(query.router, prefix="/api", tags=["query"])
