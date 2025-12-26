@@ -414,10 +414,9 @@ This project is created for technical evaluation purposes at HeyPico.ai.
 
 ## 👤 Author
 
-Built with care for HeyPico.ai technical assessment.
+Satya Nagara  
+Developed as part of the HeyPico.ai technical assessment.
 
 ---
 
 **Questions?** Check [ASSUMPTIONS.md](ASSUMPTIONS.md) for detailed design decisions.
-
-test
