@@ -65,22 +65,37 @@ This repository includes:
 ┌─────────────────────────────────────────────────────────────────┐
 │                    FastAPI Backend (Python)                      │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │  1. LLM Service (Ollama/Llama 3.2)                       │   │
+│  │  1. Pre-processing Layer                                 │   │
+│  │     • If GPS available: reverse geocode to city name     │   │
+│  │     • Detect "near me" → replace with actual location    │   │
+│  │     • Enhance vague queries: "food" → "food near City"   │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                            │                                     │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  2. LLM Service (Ollama/Llama 3.2)                       │   │
 │  │     Extracts: {"query": "ramen", "location": "Blok M"}   │   │
+│  │     Fallback: Keyword matching for food types & places   │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │                            │                                     │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │  2. Google Maps Places API                               │   │
-│  │     Returns: 5 ramen places near Blok M                  │   │
+│  │  3. Location Override Logic                              │   │
+│  │     GPS coordinates available? → Use user's actual city  │   │
+│  │     No GPS? → Use LLM's extracted location               │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │                            │                                     │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │  3. Google Distance Matrix API                           │   │
+│  │  4. Google Maps Places API                               │   │
+│  │     Search with prioritized location (GPS > LLM)         │   │
+│  │     Returns: 5 places matching query                     │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                            │                                     │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  5. Google Distance Matrix API                           │   │
 │  │     Calculates: walk/bike/drive times from user location │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │                            │                                     │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │  4. Transport Recommendation Logic                       │   │
+│  │  6. Transport Recommendation Logic                       │   │
 │  │     • Walk ≤ 7 min → recommend walk                      │   │
 │  │     • Bike ≤ 10 min → recommend bike                     │   │
 │  │     • Else → recommend drive                             │   │
